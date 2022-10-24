@@ -1,4 +1,6 @@
 from flask import Flask, abort, send_file, request
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import random
 import os
 import time
@@ -26,7 +28,7 @@ def fetch_file(website: str, preload: str, filename: str):
     elif latency is not None and latency_fluctuations is not None:
         sleep_time = random.uniform(latency - latency_fluctuations, latency + latency_fluctuations)
 
-    if sleep_time is not None and sleep_time.isnumeric():
+    if sleep_time is not None and type(sleep_time) is float:
         time.sleep(sleep_time)
 
     if preload not in ['preload', 'no-preload']:
