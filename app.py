@@ -12,6 +12,10 @@ app = Flask(__name__)
 
 @app.route('/<website>/<preload>/<filename>')
 def fetch_file(website: str, preload: str, filename: str):
+    return fetch_file_nested(website, preload, None, filename)
+
+@app.route('/<website>/<preload>/<dirname>/<filename>')
+def fetch_file_nested(website: str, preload: str, dirname: str, filename: str):
     args = request.args.to_dict()
     latency = args['latency'] if 'latency' in args else None
     latency_fluctuations = args['latency_fluctuations'] if 'latency_fluctuations' in args else None
@@ -43,13 +47,22 @@ def fetch_file(website: str, preload: str, filename: str):
         abort(404, 'Directory called %s has not been founded under the provided path (%s). Check if this directory '
                    'exist or if the path is correct.' % (preload, '%s%s/' % (PATH, website)))
 
-    if not os.path.isfile('%s%s/%s/%s' % (PATH, website, preload, filename)):
-        abort(404, 'File called %s has not been founded under the provided path (%s). Check if this file exist '
-                   'or if the path is correct.' % (filename, '%s%s/%s/' % (PATH, website, preload)))
+    if dirname and dirname is not None:
+        if not os.path.exists('%s%s/%s/%s' % (PATH, website, preload, dirname)):
+            abort(404, 'Directory called %s has not been founded under the provided path (%s). Check if this directory '
+                       'exist or if the path is correct.' % (dirname, '%s%s/%s/%s' % (PATH, website, preload, dirname)))
 
-    print('%s%s/%s/%s' % (PATH, website, preload, filename))
+        if not os.path.isfile('%s%s/%s/%s/%s' % (PATH, website, preload, dirname, filename)):
+            abort(404, 'File called %s has not been founded under the provided path (%s). Check if this file exist '
+                       'or if the path is correct.' % (filename, '%s%s/%s/%s' % (PATH, website, preload, dirname)))
 
-    return send_file('%s%s/%s/%s' % (PATH, website, preload, filename))
+        return send_file('%s%s/%s/%s/%s' % (PATH, website, preload, dirname, filename))
+    else:
+        if not os.path.isfile('%s%s/%s/%s' % (PATH, website, preload, filename)):
+            abort(404, 'File called %s has not been founded under the provided path (%s). Check if this file exist '
+                       'or if the path is correct.' % (filename, '%s%s/%s/' % (PATH, website, preload)))
+
+        return send_file('%s%s/%s/%s' % (PATH, website, preload, filename))
 
 
 if __name__ == '__main__':
